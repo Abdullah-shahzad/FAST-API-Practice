@@ -1,72 +1,115 @@
-from typing import Union
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional
 
 app = FastAPI()
 
-#Create a simple "Hello World" application and run it with Uvicorn
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+# Pydantic model for an item
+class Item(BaseModel):
+    """Data model representing an item entity."""
+    id: int
+    name: str
+    description: Optional[str] = None
+    price: float
+    quantity: int
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+# In-memory storage for items
 
+items_db = []
 
-fake_items_db = [
-    {"item_id": 1, "name": "Apple", "category": "Fruit"},
-    {"item_id": 2, "name": "Carrot", "category": "Vegetable"},
-    {"item_id": 3, "name": "Banana", "category": "Fruit"},
-]
-
-
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, category: Union[str, None] = None):
+# Create an item
+@app.post("/items/", response_model=Item, status_code=201)
+async def create_item(item: Item):
     """
-    This route captures `item_id` as a path parameter and
-    filters the items based on the `category` query parameter.
+    Create a new item entry in the fake database[list].
+
+    Args:
+        item (Item): The item details to be created.
+
+    Raises:
+        HTTPException: If an item with the same ID already exists.
+
+    Returns:
+        Item: The newly created item entry.
     """
-    for item in fake_items_db:
-        if item["item_id"] == item_id:
-            if category and item["category"].lower() == category.lower():
-                return {"item": item, "filtered_by_category": category}
-            return {"item": item}
+    for existing_item in items_db:
+        if existing_item.id == item.id:
+            raise HTTPException(status_code=400, detail="Item with this ID already exists.")
+    items_db.append(item)
+    return item
 
-    return {"error": "Item not found"}
-
-
-#Define routes using HTTP methods (GET, POST, PUT, DELETE)
-
-@app.get("/items/")
-async def get_items():
+# Read all items
+@app.get("/items/", response_model=List[Item])
+async def read_items():
     """
-    Handles GET requests to fetch all items.
-    """
-    return {"message": "Fetching all items"}
+    Retrieve a list of all item entries.
 
-@app.post("/items/")
-async def create_item():
+    Returns:
+        List[Item]: A list containing all item entries in the fake database[list].
     """
-    Handles POST requests to create a new item.
-    """
-    return {"message": "Item created"}
+    return items_db
 
-
-@app.put("/items/{item_id}")
-async def update_item(item_id: int):
+# Read a specific item by ID
+@app.get("/items/{item_id}", response_model=Item)
+async def read_item(item_id: int):
     """
-    Handles PUT requests to update an existing item.
-    """
-    return {"message": f"Item {item_id} updated"}
+    Retrieve a specific item by its unique ID.
 
-@app.delete("/items/{item_id}")
+    Args:
+        item_id (int): The unique identifier of the item to retrieve.
+
+    Raises:
+        HTTPException: If no item is found with the specified ID.
+
+    Returns:
+        Item: The item entry that matches the given ID.
+    """
+    for item in items_db:
+        if item.id == item_id:
+            return item
+    raise HTTPException(status_code=404, detail="Item not found.")
+
+# Update an item
+@app.put("/items/{item_id}", response_model=Item)
+async def update_item(item_id: int, updated_item: Item):
+    """
+    Update an existing item entry with new details.
+
+    Args:
+        item_id (int): The unique identifier of the item to update.
+        updated_item (Item): The updated item details.
+
+    Raises:
+        HTTPException: If no item is found with the specified ID.
+
+    Returns:
+        Item: The updated item entry.
+    """
+    for index, item in enumerate(items_db):
+        if item.id == item_id:
+            items_db[index] = updated_item
+            return updated_item
+    raise HTTPException(status_code=404, detail="Item not found.")
+
+# Delete an item
+@app.delete("/items/{item_id}", status_code=204)
 async def delete_item(item_id: int):
     """
-    Handles DELETE requests to delete an item.
+    Delete an item entry from the database by its unique ID.
+
+    Args:
+        item_id (int): The unique identifier of the item to delete.
+
+    Raises:
+        HTTPException: If no item is found with the specified ID.
+
+    Returns:
+        None: This endpoint returns no content upon successful deletion.
     """
-    return {"message": f"Item {item_id} deleted"}
-
-
+    for index, item in enumerate(items_db):
+        if item.id == item_id:
+            items_db.pop(index)
+            return None
+    raise HTTPException(status_code=404, detail="Item not found.")
 
