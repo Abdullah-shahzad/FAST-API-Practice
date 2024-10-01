@@ -4,7 +4,7 @@ from typing import List, Optional
 
 app = FastAPI()
 
-# Pydantic model for an item
+
 class Item(BaseModel):
     """Data model representing an item entity."""
     id: int
@@ -14,11 +14,10 @@ class Item(BaseModel):
     quantity: int
 
 
-# In-memory storage for items
 
 items_db = []
 
-# Create an item
+
 @app.post("/items/", response_model=Item, status_code=201)
 async def create_item(item: Item):
     """
@@ -50,7 +49,7 @@ async def read_items():
     """
     return items_db
 
-# Read a specific item by ID
+
 @app.get("/items/{item_id}", response_model=Item)
 async def read_item(item_id: int):
     """
@@ -70,7 +69,7 @@ async def read_item(item_id: int):
             return item
     raise HTTPException(status_code=404, detail="Item not found.")
 
-# Update an item
+
 @app.put("/items/{item_id}", response_model=Item)
 async def update_item(item_id: int, updated_item: Item):
     """
@@ -92,7 +91,7 @@ async def update_item(item_id: int, updated_item: Item):
             return updated_item
     raise HTTPException(status_code=404, detail="Item not found.")
 
-# Delete an item
+
 @app.delete("/items/{item_id}", status_code=204)
 async def delete_item(item_id: int):
     """
