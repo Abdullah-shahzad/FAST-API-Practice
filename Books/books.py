@@ -4,7 +4,7 @@ from typing import List, Optional
 
 app = FastAPI()
 
-# Pydantic model for a book
+
 class Book(BaseModel):
     """Data model representing a book entity."""
     id: int
@@ -14,10 +14,9 @@ class Book(BaseModel):
     description: Optional[str] = None
 
 
-# In-memory storage for books
+# memory storage for books
 books_db = []
 
-# Create a book
 @app.post("/books/", response_model=Book, status_code=201)
 async def create_book(book: Book):
     """
@@ -38,7 +37,6 @@ async def create_book(book: Book):
     books_db.append(book)
     return book
 
-# Read all books
 @app.get("/books/", response_model=List[Book])
 async def read_books():
     """
@@ -49,7 +47,7 @@ async def read_books():
     """
     return books_db
 
-# Read a specific book by ID
+
 @app.get("/books/{book_id}", response_model=Book)
 async def read_book(book_id: int):
     """
@@ -69,7 +67,7 @@ async def read_book(book_id: int):
             return book
     raise HTTPException(status_code=404, detail="Book not found.")
 
-# Update a book
+
 @app.put("/books/{book_id}", response_model=Book)
 async def update_book(book_id: int, updated_book: Book):
     """
@@ -91,7 +89,7 @@ async def update_book(book_id: int, updated_book: Book):
             return updated_book
     raise HTTPException(status_code=404, detail="Book not found.")
 
-# Delete a book
+
 @app.delete("/books/{book_id}", status_code=204)
 async def delete_book(book_id: int):
     """
@@ -109,5 +107,5 @@ async def delete_book(book_id: int):
     for index, book in enumerate(books_db):
         if book.id == book_id:
             books_db.pop(index)
-            return None
+            return {"message": "the book is successfully deleted"}
     raise HTTPException(status_code=404, detail="Book not found.")
