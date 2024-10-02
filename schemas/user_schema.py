@@ -5,14 +5,18 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
-    hashed_password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8)
 
 class UserUpdate(UserBase):
     is_active: bool = True
+    password: str = None  # Optional for updates
 
 class UserRead(UserBase):
     id: int
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class UserModel(UserRead):
+    pass
